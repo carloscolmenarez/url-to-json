@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> JSON to URL | URL to JSON </title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-800 text-white h-screen" onload="document.getElementById('baseURL').focus();">
+    <div id="app">
+		<div class="max-w-2xl mx-auto mt-10 p-5 bg-gray-700 shadow-md rounded">
+			<h2 class="text-xl font-semibold mb-5">URL Generator from JSON</h2>
+			<div class="mb-4">
+				<label for="baseURL" class="block text-gray-300 text-sm font-bold mb-2">Base URL:</label>
+				<input type="text" id="baseURL" v-model="baseURL" placeholder="https://example.com"
+					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline">
+			</div>
+			<div class="mb-2">
+				<label for="jsonInput" class="block text-gray-300 text-sm font-bold mb-2">Parameters (JSON-like):</label>
+				<textarea v-model="jsonInput" rows="18" placeholder='{"key1":"value1", "key2":"value2"}'
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+				<p v-if="jsonInput != '' && !isValidJSON" class="text-red-500 text-xs italic">Invalid JSON input.</p>
+			</div>
+			<!-- <p class="text-gray-700 text-sm mb-2">Generated URL:</p> -->
+			<p class="mb-4 break-words"><a v-if="isValidJSON" :href="generatedURL" target="_blank">{{ generatedURL }}</a></p>
+			<button v-if="isValidJSON" @click="openURL" 
+					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2" title="Open generated URL in new tab">
+				Open URL
+			</button>
+			<button v-if="isValidJSON" @click="copyToClipboard" 
+					class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" title="Copy generated URL to clipboard">
+				Copy to Clipboard
+			</button>
+		</div>
+
+		<div class="max-w-2xl mx-auto mt-10 p-5 bg-gray-700 shadow-md rounded">
+			<h2 class="text-xl font-semibold mb-5">URL to JSON Parser</h2>
+			<div class="mb-4">
+				<label for="urlInput" class="block text-gray-300 text-sm font-bold mb-2">URL with Parameters:</label>
+				<input type="text" v-model="urlInput" placeholder="https://example.com?param1=value1&param2=value2"
+					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline">
+			</div>
+			<div class="mb-6">
+				<label for="jsonOutput" class="block text-gray-300 text-sm font-bold mb-2">Generated JSON:</label>
+				<textarea id="jsonOutput" v-model="jsonOutput" rows="18" readonly
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline bg-gray-100"></textarea>
+			</div>
+            <button @click="copyJsonToClipboard" 
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Copy JSON to Clipboard
+            </button>
+		</div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                baseURL: '',
+                urlInput: '',
+                jsonOutput: '',
+                generatedURL: 'Waiting for valid JSON-like input...',
+                jsonInput: '',
+            },
+            watch: {
+                urlInput: function(newVal) {
+                    this.parseURL(newVal);
+                }
+            },
+            computed: {
+                isValidJSON: function() {
+					if(this.jsonInput === '') return false;
+                    try {
+                        this.generateURL();
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+            },
+            methods: {
+				generateURL: function() {
+					// Step 1: Ensure all keys are double-quoted. This targets unquoted keys.
+					const withQuotedKeys = this.jsonInput.replace(/([{,]\s*)([^\s:{},]+)\s*:/g, '$1"$2":');
+
+					// Step 2: Replace single-quoted values with double quotes, careful to avoid affecting already correctly double-quoted values.
+					// This step is tricky and may not perfectly handle cases where single quotes are used within values.
+					// It replaces single quotes at the start and end of values with double quotes, but it may not correctly handle all edge cases.
+					const withDoubleQuotedValues = withQuotedKeys.replace(/:\s*'([^']+)'/g, ':"$1"')
+																.replace(/'([^']+)'(?=[,}])/g, '"$1"');
+
+					// Parse the adjusted string as JSON and convert to query parameters
+					try {
+						const paramsObj = JSON.parse(withDoubleQuotedValues);
+						const queryParams = new URLSearchParams(paramsObj).toString();
+						this.generatedURL = `${this.baseURL}?${queryParams}`;
+					} catch (e) {
+						console.error("Failed to generate URL: ", e);
+						// Handle the error (e.g., show an error message to the user)
+					}
+				},
+                parseURL: function(url) {
+                    const parser = document.createElement('a');
+                    parser.href = url;
+                    const query = parser.search.substring(1);
+                    const vars = query.split('&');
+                    if(vars[0] === "") return;
+                    const result = {};
+                    for (let varPair of vars) {
+                        const pair = varPair.split('=');
+                        const key = decodeURIComponent(pair[0]);
+                        const value = decodeURIComponent(pair[1] || '');
+                        result[key] = value;
+                    }
+                    this.jsonOutput = JSON.stringify(result, null, 2);
+                },
+                copyToClipboard: function() {
+                    const tempInput = document.createElement('input');
+                    document.body.appendChild(tempInput);
+                    tempInput.value = this.generatedURL;
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    alert('URL copied to clipboard!');
+                },
+                openURL: function() {
+                    window.open(this.generatedURL, '_blank');
+                },
+                copyJsonToClipboard: function() {
+					const tempInput = document.createElement('input');
+                    document.body.appendChild(tempInput);
+                    tempInput.value = this.jsonOutput;
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    alert('URL copied to clipboard!');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
