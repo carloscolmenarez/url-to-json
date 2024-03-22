@@ -23,12 +23,12 @@
 				<p v-if="jsonInput != '' && !isValidJSON" class="text-red-500 text-xs italic">Invalid JSON input.</p>
 			</div>
 			<!-- <p class="text-gray-700 text-sm mb-2">Generated URL:</p> -->
-			<p class="mb-4 break-words"><a v-if="isValidJSON" :href="generatedURL" target="_blank">{{ generatedURL }}</a></p>
-			<button v-if="isValidJSON" @click="openURL" 
+			<p class="mb-4 break-words"><a v-if="baseURL != '' && isValidJSON" :href="generatedURL" target="_blank">{{ generatedURL }}</a></p>
+			<button v-if="baseURL != '' && isValidJSON" @click="openURL" 
 					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2" title="Open generated URL in new tab">
 				Open URL
 			</button>
-			<button v-if="isValidJSON" @click="copyToClipboard" 
+			<button v-if="baseURL != '' && isValidJSON" @click="copyToClipboard" 
 					class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" title="Copy generated URL to clipboard">
 				Copy to Clipboard
 			</button>
@@ -57,11 +57,13 @@
         new Vue({
             el: '#app',
             data: {
+                //inputs
                 baseURL: '',
-                urlInput: '',
-                jsonOutput: '',
-                generatedURL: 'Waiting for valid JSON-like input...',
                 jsonInput: '',
+                urlInput: '',
+                //outputs
+                jsonOutput: '',
+                generatedURL: '',
             },
             watch: {
                 urlInput: function(newVal) {
@@ -70,7 +72,7 @@
             },
             computed: {
                 isValidJSON: function() {
-					if(this.jsonInput === '') return false;
+					if(this.jsonInput === '' || this.jsonInput.length < 2) return false;
                     try {
                         this.generateURL();
                         return true;
@@ -81,23 +83,26 @@
             },
             methods: {
 				generateURL: function() {
-					// Step 1: Ensure all keys are double-quoted. This targets unquoted keys.
-					const withQuotedKeys = this.jsonInput.replace(/([{,]\s*)([^\s:{},]+)\s*:/g, '$1"$2":');
-
-					// Step 2: Replace single-quoted values with double quotes, careful to avoid affecting already correctly double-quoted values.
-					// This step is tricky and may not perfectly handle cases where single quotes are used within values.
-					// It replaces single quotes at the start and end of values with double quotes, but it may not correctly handle all edge cases.
-					const withDoubleQuotedValues = withQuotedKeys.replace(/:\s*'([^']+)'/g, ':"$1"')
-																.replace(/'([^']+)'(?=[,}])/g, '"$1"');
+                    //Add double quotes to the JSON keys if they don't have them.
+                    const fixedInput = (this.jsonInput.trim().replace(/{\s*/, "{").length >= 2 && !(/[a-zA-Z]/.test(this.jsonInput.trim().replace(/{\s*/, "{").charAt(1)))) 
+                    ? this.jsonInput.trim().replace(/{\s*/, "{")
+                    // This regex looks for unquoted keys and adds double quotes around them
+                    : this.jsonInput.replace(/([{,]\s*)([^\s:{},]+)\s*:/g, '$1"$2":')
+                                            // Additionally, ensure single-quoted strings are replaced with double quotes
+                                            .replace(/:\s*'([^']+)'/g, ':"$1"')
+                                            // Handle special case where single quotes are used inside the strings
+                                            .replace(/'([^']+)'(?=[,}])/g, '"$1"');
 
 					// Parse the adjusted string as JSON and convert to query parameters
 					try {
-						const paramsObj = JSON.parse(withDoubleQuotedValues);
+						const paramsObj = JSON.parse(fixedInput);
 						const queryParams = new URLSearchParams(paramsObj).toString();
 						this.generatedURL = `${this.baseURL}?${queryParams}`;
+                        console.log('is a valid JSON');
+                        console.log(`URL: ${this.generatedURL}`);
 					} catch (e) {
 						console.error("Failed to generate URL: ", e);
-						// Handle the error (e.g., show an error message to the user)
+                        throw Error("Failed to generate URL: ", e);
 					}
 				},
                 parseURL: function(url) {
