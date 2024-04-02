@@ -7,48 +7,54 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-800 text-white h-screen" onload="document.getElementById('baseURL').focus();">
+<body class="bg-gray-800 text-white h-screen" onload="document.getElementById('urlInput').focus();">
     <div id="app">
 		<div class="max-w-2xl mx-auto mt-10 p-5 bg-gray-700 shadow-md rounded">
-			<h2 class="text-xl font-semibold mb-5">URL Generator from JSON</h2>
+			<h2 class="text-xl font-semibold mb-5">URL to JSON</h2>
+			<div class="mb-4">
+				<input type="text" id="urlInput" v-model="urlInput" placeholder="https://example.com?param1=value1&param2=value2"
+					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline">
+			</div>
+			<div class="mb-6">
+                <label for="jsonOutput" class="block text-gray-300 text-sm font-bold mb-2">JSON:</label>
+				<textarea id="jsonOutput" v-model="jsonOutput" rows="18" readonly
+						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline bg-gray-100"></textarea>
+			</div>
+            <button @click="copyJsonToClipboard" 
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Copy JSON to Clipboard {{ copyJsonCheck }}
+            </button>
+            <button @click="clearURLtoJSON" 
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Clear
+            </button>
+		</div>
+
+		<div class="max-w-2xl mx-auto mt-10 p-5 bg-gray-700 shadow-md rounded">
+			<h2 class="text-xl font-semibold mb-5">JSON to URL</h2>
 			<div class="mb-4">
 				<label for="baseURL" class="block text-gray-300 text-sm font-bold mb-2">Base URL:</label>
 				<input type="text" id="baseURL" v-model="baseURL" placeholder="https://example.com"
 					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline">
 			</div>
 			<div class="mb-2">
-				<label for="jsonInput" class="block text-gray-300 text-sm font-bold mb-2">Parameters (JSON-like):</label>
-				<textarea v-model="jsonInput" rows="18" placeholder='{"key1":"value1", "key2":"value2"}'
+				<label for="jsonInput" class="block text-gray-300 text-sm font-bold mb-2">Parameters:</label>
+				<textarea id="jsonInput" v-model="jsonInput" rows="18" placeholder='{"key1":"value1", "key2":"value2"}'
 						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline"></textarea>
 				<p v-if="jsonInput != '' && !isValidJSON" class="text-red-500 text-xs italic">Invalid JSON input.</p>
 			</div>
-			<!-- <p class="text-gray-700 text-sm mb-2">Generated URL:</p> -->
 			<p class="mb-4 break-words"><a v-if="baseURL != '' && isValidJSON" :href="generatedURL" target="_blank">{{ generatedURL }}</a></p>
 			<a v-if="baseURL != '' && isValidJSON" :href="generatedURL" target="_blank"
 					class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2" title="Open generated URL in new tab">
 				Open URL
             </a>
-			<button v-if="baseURL != '' && isValidJSON" @click="copyToClipboard" 
+			<button @click="copyUrlToClipboard" 
 					class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" title="Copy generated URL to clipboard">
-				Copy to Clipboard
+                    Copy URL to Clipboard {{ copyUrlCheck }}
 			</button>
-		</div>
-
-		<div class="max-w-2xl mx-auto mt-10 p-5 bg-gray-700 shadow-md rounded">
-			<h2 class="text-xl font-semibold mb-5">URL to JSON Parser</h2>
-			<div class="mb-4">
-				<label for="urlInput" class="block text-gray-300 text-sm font-bold mb-2">URL with Parameters:</label>
-				<input type="text" v-model="urlInput" placeholder="https://example.com?param1=value1&param2=value2"
-					class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline">
-			</div>
-			<div class="mb-6">
-				<label for="jsonOutput" class="block text-gray-300 text-sm font-bold mb-2">Generated JSON:</label>
-				<textarea id="jsonOutput" v-model="jsonOutput" rows="18" readonly
-						class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 bg-gray-800 border-gray-600 leading-tight focus:outline-none focus:shadow-outline bg-gray-100"></textarea>
-			</div>
-            <button @click="copyJsonToClipboard" 
-                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Copy JSON to Clipboard
+            <button @click="clearJSONtoURL" 
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Clear
             </button>
 		</div>
     </div>
@@ -58,12 +64,15 @@
             el: '#app',
             data: {
                 //inputs
+                urlInput: '',
                 baseURL: '',
                 jsonInput: '',
-                urlInput: '',
                 //outputs
                 jsonOutput: '',
                 generatedURL: '',
+
+                copyJsonCheck: '',
+                copyUrlCheck: '',
             },
             watch: {
                 urlInput: function(newVal) {
@@ -120,24 +129,37 @@
                     }
                     this.jsonOutput = JSON.stringify(result, null, 2);
                 },
-                copyToClipboard: function() {
+                copyUrlToClipboard: function() {
+
+                    if(!this.isValidJSON) return false;
+
                     const tempInput = document.createElement('input');
                     document.body.appendChild(tempInput);
                     tempInput.value = this.generatedURL;
                     tempInput.select();
                     document.execCommand('copy');
                     document.body.removeChild(tempInput);
-                    alert('URL copied to clipboard!');
+                    this.copyUrlCheck = '✔';
                 },
                 copyJsonToClipboard: function() {
-					const tempInput = document.createElement('input');
-                    document.body.appendChild(tempInput);
-                    tempInput.value = this.jsonOutput;
-                    tempInput.select();
+
+                    if(this.jsonOutput == '') return false;
+
+					const jsonOutput = document.getElementById('jsonOutput');
+                    jsonOutput.select();
                     document.execCommand('copy');
-                    document.body.removeChild(tempInput);
-                    alert('URL copied to clipboard!');
-                }
+                    this.copyJsonCheck = '✔';
+                },
+                clearURLtoJSON: function() {
+                    this.urlInput = '';
+                    this.jsonOutput = '';
+                    this.copyJsonCheck = '';
+                },
+                clearJSONtoURL: function() {
+                    this.baseURL = '';
+                    this.jsonInput = '';
+                    this.copyUrlCheck = '';
+                },
             }
         });
     </script>
