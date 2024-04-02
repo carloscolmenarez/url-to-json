@@ -16,15 +16,16 @@ No installation required!
 ## Usage
 Visit [carloscolmenarez.github.io/url-to-json](https://carloscolmenarez.github.io/url-to-json/).
 
-### Generating URLs from JSON
-1. Enter the base URL in the input field.
-2. Enter your JSON formatted parameters in the text area.
-3. If JSON provided has a valid format, the tool automatically generates a URL with the query parameters.
-
 ### Converting URL Query Parameters to JSON
-1. Go to "URL to JSON Parser" section.
-2. Enter the URL with query parameters.
-3. If the URL has a valid format, a JSON is automatically generated with the parameters.
+1. Enter the URL with querystring.
+2. If the URL has a valid format, a JSON is automatically generated with the parameters.
+
+### Generating URL from JSON
+1. Go to "JSON to URL" section.
+2. Enter the base URL in the input field.
+3. Enter your JSON formatted parameters in the text area.
+4. If JSON provided has a valid format, the tool automatically generates a URL with querystring.
+
 
 ## Contributing
 Contributions are warmly welcomed! If you're interested in contributing, please:
