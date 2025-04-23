@@ -1,18 +1,5 @@
 # URL Query and JSON Web Tool
 
-## Description
-This web tool simplifies the process of working with URLs and their query parameters. It offers two functionalities: extracting query parameters from URLs and converting them into JSON format, and the reverse process of generating URLs with query parameters from JSON input. Designed for developers, testers, and anyone working with web applications and APIs, this tool facilitates the manipulation and analysis of URL parameters and JSON data.
-This tool was developed in less than 2 hours using ChatGPT.
-
-## Features
-- **Two-Way Conversion**: Converts URL query parameters to JSON and vice versa.
-- **User-friendly Interface**: Simple and intuitive design for hassle-free operation.
-- **Instant Results**: Provides immediate conversion for both functionalities.
-- **Accuracy**: Ensures that the conversions accurately reflect the input data.
-
-## Installation
-No installation required!
-
 ## Usage
 Visit [carloscolmenarez.github.io/url-to-json](https://carloscolmenarez.github.io/url-to-json/).
 
@@ -25,7 +12,6 @@ Visit [carloscolmenarez.github.io/url-to-json](https://carloscolmenarez.github.i
 2. Enter the base URL in the input field.
 3. Enter your JSON formatted parameters in the text area.
 4. If JSON provided has a valid format, the tool automatically generates a URL with querystring.
-
 
 ## Contributing
 Contributions are warmly welcomed! If you're interested in contributing, please:
