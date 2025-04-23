@@ -1,4 +1,4 @@
-# URL to JSON Web Tool
+# Online Query String to JSON Converter and vice versa
 
 ## Usage
 Visit [carloscolmenarez.github.io/url-to-json](https://carloscolmenarez.github.io/url-to-json/).
