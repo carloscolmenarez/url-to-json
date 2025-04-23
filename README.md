@@ -1,4 +1,4 @@
-# URL Query and JSON Web Tool
+# URL to JSON Web Tool
 
 ## Usage
 Visit [carloscolmenarez.github.io/url-to-json](https://carloscolmenarez.github.io/url-to-json/).
